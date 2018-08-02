@@ -2,10 +2,11 @@ from __future__ import print_function
 
 from . import config
 
+import subprocess
+from pathlib import Path
 import platform
 mac_os = platform.system() == 'Darwin'
 windows_os = platform.system() == 'Windows'
-
 
 import sys
 py3 = sys.version_info > (3,)
@@ -31,6 +32,16 @@ import subprocess
 import os
 import re
 import atexit
+
+def IFrame_png(fpath, width, height):
+    fn = Path(fpath)
+    fpath_out = str(fn.with_suffix('')) + '.png'
+    size_arg = str(width) + "x" + str(height)
+    cmd = ['/usr/local/bin/convert','-density','300','-resize',size_arg, fpath, fpath_out]
+    subprocess.call(cmd, shell=False)
+    return(IFrame(fpath_out, width=width, height=height))
+
+
 
 class iPyStata:
 
@@ -71,6 +82,8 @@ iPyStata = iPyStata()
 def clean_at_close():
     if os.path.isfile(os.path.join(iPyStata.tornado_dir, 'temp_graph.pdf')):
         os.remove(os.path.join(iPyStata.tornado_dir, 'temp_graph.pdf'))
+    if os.path.isfile(os.path.join(iPyStata.tornado_dir, 'temp_graph.png')):
+        os.remove(os.path.join(iPyStata.tornado_dir, 'temp_graph.png'))
 
 atexit.register(clean_at_close)
 
@@ -238,7 +251,7 @@ class iPyStataMagic(Magics):
                 if not len(out) < 5:
                     print(out)
                 if re.search('could not find Graph window', out, flags=re.I) is None:
-                    return IFrame('./temp_graph.pdf', width=700, height=400)
+                    return IFrame_png('./temp_graph.pdf', width=700, height=400)
                 else:
                     print('\nNo graph displayed, could not find one generated in this cell.')
             else:
